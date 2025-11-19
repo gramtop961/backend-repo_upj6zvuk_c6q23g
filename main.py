@@ -97,20 +97,31 @@ def list_jobs(limit: int = 20):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Stubs to simulate Flames.Blue agent action integrations.
-# In your environment, your master agent should call these or be called by these.
+# Updated to return playable sample assets so the UI can render audio/video now.
+
+SAMPLE_MP3 = "https://samplelib.com/lib/preview/mp3/sample-3s.mp3"
+SAMPLE_MP4S = [
+    "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+    "https://samplelib.com/lib/preview/mp4/sample-10s.mp4",
+    "https://samplelib.com/lib/preview/mp4/sample-15s.mp4",
+]
 
 @app.post("/api/actions/generate_voice")
 def action_generate_voice(payload: GenerateVoicePayload):
-    return {"voiceover_url": "https://example.com/voiceover.mp3"}
+    # In a real integration, call your TTS provider here with payload.script & payload.voice
+    return {"voiceover_url": SAMPLE_MP3}
 
 @app.post("/api/actions/generate_broll")
 def action_generate_broll(payload: GenerateBrollPayload):
-    urls = [f"https://example.com/broll_{i}.mp4" for i, _ in enumerate(payload.scene_prompts, start=1)]
+    # Return a handful of short stock b-roll samples
+    n = max(1, min(len(payload.scene_prompts), 3))
+    urls = SAMPLE_MP4S[:n]
     return {"broll_urls": urls}
 
 @app.post("/api/actions/auto_edit_video")
 def action_auto_edit(payload: AutoEditPayload):
-    return {"final_url": "https://example.com/final_video.mp4"}
+    # Pretend we stitched the clips with the voiceover; return a playable sample
+    return {"final_url": SAMPLE_MP4S[-1]}
 
 # --------- Full pipeline runner ---------
 
@@ -137,8 +148,8 @@ def run_pipeline(req: RunRequest):
 
     # 2) Script generation (mock)
     script = (
-        f"Title: {topic}\n\n" 
-        "Intro: In this video, we explore how AI copilots...\n" 
+        f"Title: {topic}\n\n"
+        "Intro: In this video, we explore how AI copilots...\n"
         "...\nConclusion: Subscribe for more!"
     )
     scenes = [
@@ -176,7 +187,7 @@ def run_pipeline(req: RunRequest):
         voiceover_url=voice_res["voiceover_url"],
         broll_urls=broll_res["broll_urls"],
         final_url=edit_res["final_url"],
-        logs=["Pipeline executed (mock)"]
+        logs=["Pipeline executed (mock) with playable samples"]
     )
     try:
         job_id = create_document("videojob", job)
